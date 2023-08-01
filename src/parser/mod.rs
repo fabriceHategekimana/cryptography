@@ -2,6 +2,7 @@
 
 //parseur de commande
 pub mod commands;
+
 use nom::IResult;
 use nom::sequence::preceded;
 use nom::bytes::complete::tag;
@@ -14,6 +15,7 @@ use nom::character::complete::digit1;
 use nom::sequence::terminated;
 use nom::branch::alt;
 use commands::Command;
+use crate::KeyValue;
 
 fn parse_select(s: &str) -> IResult<&str,Command> {
     let res = preceded(
@@ -52,7 +54,9 @@ fn parse_encrypt_full(s: &str) -> IResult<&str,Command> {
         digit1,
         ))(s);
     match res {
-        Ok((s, (e, m, w, d))) => Ok((s, Command::Encrypt(Some((parse_digit(d),m))))),
+        Ok((s, (e, m, w, d))) => Ok((s, Command::Encrypt(Some((
+                            KeyValue::Integer(parse_digit(d)),
+                            m))))),
         Err(e) => Err(e)
     }
 }
@@ -80,7 +84,9 @@ fn parse_decrypt_full(s: &str) -> IResult<&str,Command> {
         digit1,
         ))(s);
     match res {
-        Ok((s, (e, m, w, d))) => Ok((s, Command::Decrypt(Some((parse_digit(d),m))))),
+        Ok((s, (e, m, w, d))) => Ok((s, Command::Decrypt(Some((
+                            KeyValue::Integer(parse_digit(d)),
+                            m))))),
         Err(e) => Err(e)
     }
 }
@@ -194,7 +200,7 @@ mod tests {
     fn test_encrypt() {
         assert_eq!(
             parse_encrypt("encrypt \"Hello\" with 5").unwrap().1,
-            Command::Encrypt(Some((5, "Hello".to_string()))));
+            Command::Encrypt(Some((KeyValue::Integer(5), "Hello".to_string()))));
     }
 
     #[test]

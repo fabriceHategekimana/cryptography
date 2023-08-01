@@ -3,14 +3,20 @@ use crate::Algo;
 #[derive(PartialEq, Debug)]
 pub enum Command {
    Select(String),
-   Encrypt(Option<(i8, String)>),
-   Decrypt(Option<(i8, String)>),
+   Encrypt(Option<(KeyValue, String)>),
+   Decrypt(Option<(KeyValue, String)>),
    Key(i8),
    Message(String),
    Status,
    Exit,
    Help,
    Empty,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum KeyValue {
+    Integer(i8),
+    Range(i8, i8)
 }
 
 impl Command {

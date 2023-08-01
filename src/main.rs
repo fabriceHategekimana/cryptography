@@ -4,7 +4,7 @@ mod base_cryptography;
 
 use linefeed::{Interface, ReadResult};
 use base_cryptography::Algo;
-use parser::{parse, commands::Command};
+use parser::{parse, commands::{Command, KeyValue}};
 
 //type Reader = Interface<linefeed::DefaultTerminal> ;
 
@@ -25,9 +25,9 @@ fn eval(input: &str, context: &Algo) -> (Algo, String) {
        Command::Exit => (Algo::Exit, "exit".to_string()),
        Command::Select(algo) => select_algo(&algo, context),
        Command::Encrypt(None) => (context.clone(), context.encrypt2()),
-       Command::Encrypt(Some((k, m))) => (context.clone(), context.encrypt(&m, k)),
+       Command::Encrypt(Some((KeyValue::Integer(k), m))) => (context.clone(), context.encrypt(&m, k)),
        Command::Decrypt(None) => (context.clone(), context.decrypt2()),
-       Command::Decrypt(Some((k, m))) => (context.clone(), context.decrypt(&m, k)),
+       Command::Decrypt(Some((KeyValue::Integer(k), m))) => (context.clone(), context.decrypt(&m, k)),
        Command::Key(k) => (context.set_key(k), "Key value set".to_string()),
        Command::Message(m) => (context.set_message(&m), "Message set".to_string()),
        Command::Status => (context.clone(), context.get_status()),
