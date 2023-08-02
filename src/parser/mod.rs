@@ -46,17 +46,48 @@ fn parse_text(s: &str) -> IResult<&str,String> {
         tag("\""))(s)
 }
 
+fn parse_numeric_key(s: &str) -> IResult<&str,KeyValue> {
+    match digit1(s) {
+        Ok((s, v)) => Ok((s, KeyValue::Integer(parse_digit(v)))),
+        Err(r) => Err(r)
+    }
+}
+
+fn parse_text_key(s: &str) -> IResult<&str,KeyValue> {
+    match parse_text(s) {
+        Ok((s, st)) => Ok((s, KeyValue::String(st))),
+        Err(r) => Err(r)
+    }
+}
+
+fn parse_range_key(s: &str) -> IResult<&str,KeyValue> {
+    let res = tuple((
+            digit1,
+            tag(".."),
+            digit1))(s);
+    match res {
+        Ok((s, (v1, t, v2))) => Ok((s, KeyValue::Range(parse_digit(v1), parse_digit(v2)))),
+        Err(r) => Err(r)
+    }
+}
+
+fn parse_key_value(s: &str) -> IResult<&str,KeyValue> {
+    alt((
+            parse_numeric_key,
+            parse_text_key,
+            parse_range_key
+        ))(s)
+}
+
 fn parse_encrypt_full(s: &str) -> IResult<&str,Command> {
     let res = tuple((
         tag("encrypt "),
         parse_text,
         tag(" with "),
-        digit1,
+        parse_key_value,
         ))(s);
     match res {
-        Ok((s, (e, m, w, d))) => Ok((s, Command::Encrypt(Some((
-                            KeyValue::Integer(parse_digit(d)),
-                            m))))),
+        Ok((s, (e, m, w, k))) => Ok((s, Command::Encrypt(Some((k, m))))),
         Err(e) => Err(e)
     }
 }
@@ -81,12 +112,10 @@ fn parse_decrypt_full(s: &str) -> IResult<&str,Command> {
         tag("decrypt "),
         parse_text,
         tag(" with "),
-        digit1,
+        parse_key_value,
         ))(s);
     match res {
-        Ok((s, (e, m, w, d))) => Ok((s, Command::Decrypt(Some((
-                            KeyValue::Integer(parse_digit(d)),
-                            m))))),
+        Ok((s, (e, m, w, k))) => Ok((s, Command::Decrypt(Some((k, m))))),
         Err(e) => Err(e)
     }
 }
@@ -116,9 +145,9 @@ fn parse_digit(s: &str) -> i8 {
 fn parse_key(s: &str) -> IResult<&str,Command> {
     let res = preceded(
                 tag("key "),
-                digit1)(s);
+                parse_key_value)(s);
     match res {
-        Ok((s, d)) => Ok((s, Command::Key(parse_digit(d)))),
+        Ok((s, k)) => Ok((s, Command::Key(k))),
         Err(r) => Err(r)
     }
 }
@@ -193,7 +222,7 @@ mod tests {
     fn test_parse_key() {
         assert_eq!(
             parse_key("key 67").unwrap().1,
-            Command::Key(67_i8));
+            Command::Key(KeyValue::Integer(67_i8)));
     }
 
     #[test]

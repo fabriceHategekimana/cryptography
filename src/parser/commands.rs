@@ -5,7 +5,7 @@ pub enum Command {
    Select(String),
    Encrypt(Option<(KeyValue, String)>),
    Decrypt(Option<(KeyValue, String)>),
-   Key(i8),
+   Key(KeyValue),
    Message(String),
    Status,
    Exit,
@@ -13,10 +13,23 @@ pub enum Command {
    Empty,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum KeyValue {
     Integer(i8),
-    Range(i8, i8)
+    Range(i8, i8),
+    String(String),
+    Empty
+}
+
+impl KeyValue {
+    pub fn describe(&self) -> String {
+        match self {
+            KeyValue::Integer(i) => format!("{} [integer]", i),
+            KeyValue::Range(b, e) => format!("{}..{} [range]", b, e),
+            KeyValue::String(s) => format!("\"{}\" [string]", s),
+            KeyValue::Empty => format!("Empty [empty]"),
+        }
+    }
 }
 
 impl Command {
@@ -42,7 +55,7 @@ impl Iterator for Command {
             Command::Empty => Some(Command::Select("".to_string())),
             Command::Select(_) => Some(Command::Encrypt(None)),
             Command::Encrypt(_) => Some(Command::Decrypt(None)),
-            Command::Decrypt(_) => Some(Command::Key(0_i8)),
+            Command::Decrypt(_) => Some(Command::Key(KeyValue::Empty)),
             Command::Key(_) => Some(Command::Message("".to_string())),
             Command::Message(_) => Some(Command::Status),
             Command::Status => Some(Command::Exit),

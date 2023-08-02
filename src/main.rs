@@ -1,6 +1,8 @@
 mod cesar;
+mod vigenere;
 mod parser;
 mod base_cryptography;
+mod tools;
 
 use linefeed::{Interface, ReadResult};
 use base_cryptography::Algo;
@@ -11,6 +13,7 @@ use parser::{parse, commands::{Command, KeyValue}};
 fn select_algo(algo: &str, context: &Algo) -> (Algo, String) {
     match algo {
         "cesar" => (Algo::new("cesar"), "Cesar algorithm selected.".to_string()),
+        "vigenere" => (Algo::new("vigenere"), "Vigenère algorithm selected.".to_string()),
         _ => (context.clone(), " ".to_string())
     }
 }
@@ -25,9 +28,9 @@ fn eval(input: &str, context: &Algo) -> (Algo, String) {
        Command::Exit => (Algo::Exit, "exit".to_string()),
        Command::Select(algo) => select_algo(&algo, context),
        Command::Encrypt(None) => (context.clone(), context.encrypt2()),
-       Command::Encrypt(Some((KeyValue::Integer(k), m))) => (context.clone(), context.encrypt(&m, k)),
+       Command::Encrypt(Some((keyvalue, m))) => (context.clone(), context.encrypt(&m, keyvalue)),
        Command::Decrypt(None) => (context.clone(), context.decrypt2()),
-       Command::Decrypt(Some((KeyValue::Integer(k), m))) => (context.clone(), context.decrypt(&m, k)),
+       Command::Decrypt(Some((keyvalue, m))) => (context.clone(), context.decrypt(&m, keyvalue)),
        Command::Key(k) => (context.set_key(k), "Key value set".to_string()),
        Command::Message(m) => (context.set_message(&m), "Message set".to_string()),
        Command::Status => (context.clone(), context.get_status()),
@@ -46,6 +49,7 @@ fn initialize() -> (Interface<linefeed::DefaultTerminal>, Algo){
 fn main() {
     let (reader, mut context) = initialize();
     let mut res = "".to_string();
+    println!("res: {:?}", res);
 
     while let ReadResult::Input(input) = reader.read_line().unwrap() {
         (context, res) = eval(&input, &context);
